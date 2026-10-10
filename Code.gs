@@ -1,5 +1,5 @@
 /**
- * HACKFUSION 2K27 - Registration backend (Google Apps Script Web App)
+ * HACKFUSION 2.0 - Registration backend (Google Apps Script Web App)
  *
  * TRUST MODEL
  *   Browser (index.html)   = UNTRUSTED
@@ -22,10 +22,10 @@ const TIMEZONE = "Asia/Kolkata";
 const MAX_ADDITIONAL_MEMBERS = 4;        // team size max = 5 including the leader
 
 // Must match the titles in the DOMAINS array in index.html.
-const DOMAINS = ["AI & Machine Learning", "Web & Apps", "Cybersecurity", "IoT & Hardware", "Open Innovation"];
+const DOMAINS = ["Cybersecurity", "AI/ML", "Computer Vision"];
 
 // ---- Confirmation email settings ----
-const EVENT_NAME = "HackFusion 2K27";
+const EVENT_NAME = "HackFusion 2.0";
 const EVENT_WHEN_WHERE = "This October at VDIT";           // shown in the email
 const ORGANIZER_EMAIL = "PASTE_ORGANIZER_REPLY_TO_EMAIL";   // replies from team leads go here (leave as is to skip)
 const WHATSAPP_LINK = "PASTE_WHATSAPP_LINK_HERE";           // https:// invite link; button hidden if not set
@@ -58,7 +58,7 @@ const REGISTRATION_STATUSES = ["RECEIVED", "CONFIRMED", "WAITLISTED", "CANCELLED
 
 // Opening the URL in a browser shows nothing sensitive.
 function doGet() {
-  return reply_({ ok: true, service: "HackFusion 2K27 registration", open: REGISTRATION_OPEN });
+  return reply_({ ok: true, service: "HackFusion 2.0 registration", open: REGISTRATION_OPEN });
 }
 
 function doPost(e) {
@@ -174,6 +174,8 @@ function validate_(p) {
 
   var institute = clean_(p.institute);
   if (institute.length < 3 || institute.length > 120 || !/\p{L}/u.test(institute) || /[<>]/.test(institute) || /^[=+\-@]/.test(institute)) return bad("Please enter a valid institute name.");
+  var instituteKey = institute.toLowerCase().replace(/[,.]/g, "").replace(/\s+/g, " ");
+  if (["kls vdit", "kls vishwanathrao deshpande institute of technology", "kls vdit haliyal", "kls vishwanathrao deshpande institute of technology haliyal"].indexOf(instituteKey) >= 0) return bad("Please participate in the internal hackathon for the students of the KLS VDIT.");
 
   var leaderEmail = lower_(p.leaderEmail);
   if (leaderEmail.length > 254 || !RE_EMAIL.test(leaderEmail) || leaderEmail.indexOf("..") >= 0) return bad("Please enter a valid team leader email.");
