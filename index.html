@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>HackFusion 2K27</title>
+  <title>HackFusion 2.0</title>
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src data:; img-src 'self' https: data:; media-src data:; connect-src https://script.google.com https://script.googleusercontent.com; base-uri 'none'; form-action 'none'">
   <script>
@@ -26,21 +26,21 @@
     const CONFIG = {
       // Web App URL you get after "Deploy > New deployment" in Apps Script.
       // Looks like: https://script.google.com/macros/s/AKfy.../exec
-      GOOGLE_APPS_SCRIPT_URL: "PASTE_APPS_SCRIPT_WEB_APP_URL_HERE",
+      GOOGLE_APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbxLw-M6ZtTe-4etXFI-qiKT8aCTwrXONVMcB-4Yyz_yg3bVnTK7Bnu0IEexJDJyVK_OJg/exec",
 
       // Official UPI QR code image. Use an https:// image URL, or a file next
       // to this HTML such as "upi-qr.png". Shown on the payment step.
-      PAYMENT_QR_IMAGE: "PASTE_QR_IMAGE_URL_HERE",
+      PAYMENT_QR_IMAGE: "assets/payment-qr.png",
 
       // Official UPI ID shown under the QR code (e.g. "hackfusion@okbank").
       UPI_ID: "PASTE_UPI_ID_HERE",
 
-      // Registration fee per TEAM, in rupees. DISPLAY ONLY: the amount stored in
+      // Registration fee per PERSON, in rupees. DISPLAY ONLY: the amount stored in
       // the sheet comes from REGISTRATION_FEE in Code.gs. Change both together.
-      REGISTRATION_FEE: 500,
+      REGISTRATION_FEE: 300,
 
       // WhatsApp channel/group invite link. Shown only AFTER a successful registration.
-      WHATSAPP_LINK: "PASTE_WHATSAPP_LINK_HERE"
+      WHATSAPP_LINK: "https://chat.whatsapp.com/KH8m5jHtiiJLJg9inYDTIA"
     };
 
     /*
@@ -1342,7 +1342,7 @@
       },
 
       {
-        title: 'Pay registration fee', sub: 'Pay once for the whole team.',
+        title: 'Pay registration fee', sub: 'Pay ₹300 per person.',
         html: () => `<div class="small">REGISTRATION FEE</div>
      <div class="pay"><div class="qr big" id="qr"></div><div><div class="amt" id="amt"></div><div class="small" id="upi"></div></div></div>
      <p class="small">Scan the QR code with any UPI app and pay the fee shown.</p>
@@ -1357,6 +1357,9 @@
           else qr.textContent = 'UPI QR not configured';
           const fee = Number(CONFIG.REGISTRATION_FEE);
           $('#amt').textContent = '₹' + (Number.isFinite(fee) ? fee : '—');
+          const people = teamSize();
+          const totalFee = Number.isFinite(fee) && Number.isFinite(people) ? fee * people : NaN;
+          $('#amt').textContent = '₹' + (Number.isFinite(totalFee) ? totalFee + ' (' + fee + ' per person)' : '—');
           $('#upi').textContent = isConfigured(CONFIG.UPI_ID) ? 'UPI ID: ' + CONFIG.UPI_ID : '';
           $('#utr').value = form.utr; $('#pdate').value = form.date; $('#ptime').value = form.time;
           $('#pdate').max = todayStr(); $('#pdate').min = daysAgoStr(60);
@@ -1431,7 +1434,8 @@
     async function postJSON(payload) {
       const url = CONFIG.GOOGLE_APPS_SCRIPT_URL;
       if (!/^https:\/\/script\.google\.com\//.test(url)) throw new Error('CONFIG_MISSING');
-      const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 30000);
+      // Apps Script may take longer when it writes the row and sends the confirmation email.
+      const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 120000);
       try {
         // text/plain keeps this a "simple" request: Apps Script web apps do not answer CORS preflights.
         const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), signal: ctrl.signal, redirect: 'follow', credentials: 'omit' });
