@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>HackFusion 2.0</title>
-  <link rel="icon" type="image/png" href="assets/hackfusion_logo.png">
+<link rel="icon" type="image/png" href="assets/Logo%20(2).png">
   <meta http-equiv="Content-Security-Policy"
     content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; style-src-elem 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src data: https://fonts.gstatic.com; img-src 'self' https: data:; media-src data:; connect-src https://script.google.com https://script.googleusercontent.com https://cdn.jsdelivr.net; base-uri 'none'; form-action 'none'">
   <script>
@@ -27,7 +27,7 @@
     const CONFIG = {
       // Web App URL you get after "Deploy > New deployment" in Apps Script.
       // Looks like: https://script.google.com/macros/s/AKfy.../exec
-      GOOGLE_APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyAuIYfzEe702XRb2klyvem87DQvt6oj5HbopqcMjahfNHVhOv3ZfhsTDVPSQGGJ7au0Q/exec",
+      GOOGLE_APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwzKSruy8yu2fHokHLmB8Gb_2ghXfhy5FM_NunAFjSD4Kr2p2CSu58Go-D16WzV_vrroQ/exec",
 
       // Official UPI QR code image. Use an https:// image URL, or a file next
       // to this HTML such as "upi-qr.png". Shown on the payment step.
@@ -1576,8 +1576,25 @@
       if (n) { n.disabled = on; n.textContent = label; }
       if (b) b.disabled = on;
     }
+    let missionCompleteAudio = null;
+    function playMissionCompleteSound() {
+      try {
+        if (!missionCompleteAudio) {
+          missionCompleteAudio = new Audio('assets/gta-san-andreas-mission-complete-sound-hq_4ZVTov6.mp3.mpeg');
+          missionCompleteAudio.preload = 'auto';
+          missionCompleteAudio.volume = 0.85;
+        }
+        missionCompleteAudio.currentTime = 0;
+        const playback = missionCompleteAudio.play();
+        if (playback && typeof playback.catch === 'function') playback.catch(() => {});
+      } catch (e) {
+        // Audio must never prevent registration submission.
+      }
+    }
+
     async function submit() {
       if (busy) return;
+      playMissionCompleteSound();
       setBusy(true, 'Submitting…');
       const SAFE = 'Registration service is temporarily unavailable. Please try again.';
       try {
@@ -1625,7 +1642,7 @@
     function route() { const h = location.hash.slice(1); window.scrollTo(0, 0); if (h === 'register') render(); else landing(); }
     addEventListener('hashchange', route);
     (function startupChecks() {
-      const missing = ['GOOGLE_APPS_SCRIPT_URL', 'PAYMENT_QR_IMAGE', 'UPI_ID', 'WHATSAPP_LINK'].filter(k => !isConfigured(CONFIG[k]));
+      const missing = ['GOOGLE_APPS_SCRIPT_URL', 'PAYMENT_QR_IMAGE', 'WHATSAPP_LINK'].filter(k => !isConfigured(CONFIG[k]));
       if (missing.length) console.warn('[HackFusion] CONFIG not set:', missing.join(', '));
       if (location.protocol === 'http:' && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) console.warn('[HackFusion] Serve this page over HTTPS.');
     })();

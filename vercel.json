@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/favicon.ico",
-      "destination": "/assets/hackfusion_logo.png"
+      "destination": "/assets/Logo%20(2).png"
     },
     {
       "source": "/",
