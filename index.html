@@ -179,6 +179,54 @@
       gap: 18px
     }
 
+    .sponsor-ticker {
+      width: min(100%, 720px);
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .2);
+      border-radius: 999px;
+      background: rgba(14, 6, 24, .72);
+      box-shadow: 3px 3px 0 var(--cyan);
+    }
+
+    .sponsor-ticker-track {
+      width: max-content;
+      display: flex;
+      align-items: center;
+      padding: 8px 22px 8px 100%;
+      animation: sponsor-ticker-slide 18s linear infinite;
+    }
+
+    .sponsor-ticker a {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      color: #fff;
+      font-size: 15px;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+
+    .sponsor-ticker a:hover {
+      color: var(--cyan);
+    }
+
+    .sponsor-ticker img {
+      width: 38px;
+      height: 38px;
+      object-fit: contain;
+      border-radius: 50%;
+      flex: 0 0 auto;
+    }
+
+    @keyframes sponsor-ticker-slide {
+      from { transform: translateX(0); }
+      to { transform: translateX(-100%); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .sponsor-ticker-track { animation: none; padding-left: 22px; }
+    }
+
     .tag {
       font-family: var(--script);
       font-size: 32px;
@@ -1630,6 +1678,14 @@
  <h1 class="brand">HackFusion<br>2.0</h1>
  <p class="lead">The clock starts.<br>Your idea takes over.</p>
  <div class="when">mark the date, see you on 30th october at VDIT</div>
+ <div class="sponsor-ticker" role="status" aria-label="Website sponsor">
+  <div class="sponsor-ticker-track">
+   <a href="https://the-software-society-web.vercel.app/" target="_blank" rel="noopener noreferrer">
+    <img src="assets/TSSTheGreat.png" alt="The Software Society">
+    <span>This website is brought to you by The Software Society.</span>
+   </a>
+  </div>
+ </div>
  <button id="reg">Register your team</button>
 </section>`;
       $('#reg').onclick = () => { reset(); location.hash = 'register'; };
@@ -1675,19 +1731,33 @@
         utr: form.utr, paymentDate: form.date, paymentTime: form.time
       };
     }
-    async function postJSON(payload) {
+    const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+    async function postJSON(payload, onRetry) {
       const url = CONFIG.GOOGLE_APPS_SCRIPT_URL;
       if (!/^https:\/\/script\.google\.com\//.test(url)) throw new Error('CONFIG_MISSING');
-      // Apps Script may take longer when it writes the row and sends the confirmation email.
-      const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 120000);
-      try {
-        // text/plain keeps this a "simple" request: Apps Script web apps do not answer CORS preflights.
-        const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), signal: ctrl.signal, redirect: 'follow', credentials: 'omit' });
-        if (!r.ok) throw new Error('HTTP_' + r.status);
-        let data; try { data = JSON.parse(await r.text()); } catch (e) { throw new Error('BAD_JSON'); }
-        if (!data || typeof data !== 'object') throw new Error('BAD_JSON');
-        return data;
-      } finally { clearTimeout(timer); }
+      const retryDelays = [2000, 5000, 10000];
+      let lastError = null;
+      for (let attempt = 0; attempt <= retryDelays.length; attempt++) {
+        const ctrl = new AbortController(), timer = setTimeout(() => ctrl.abort(), 120000);
+        try {
+          // text/plain keeps this a "simple" request: Apps Script web apps do not answer CORS preflights.
+          const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload), signal: ctrl.signal, redirect: 'follow', credentials: 'omit' });
+          if (!r.ok) throw new Error('HTTP_' + r.status);
+          let data; try { data = JSON.parse(await r.text()); } catch (e) { throw new Error('BAD_JSON'); }
+          if (!data || typeof data !== 'object') throw new Error('BAD_JSON');
+          if (data.code !== 'RETRY' || attempt === retryDelays.length) return data;
+          lastError = new Error('RETRY');
+        } catch (e) {
+          lastError = e;
+          if (attempt === retryDelays.length) throw e;
+        } finally {
+          clearTimeout(timer);
+        }
+        const delay = retryDelays[attempt];
+        if (onRetry) onRetry(delay);
+        await sleep(delay);
+      }
+      throw lastError || new Error('RETRY_EXHAUSTED');
     }
     function setBusy(on, label) {
       busy = on; const n = $('#next'), b = $('#back');
@@ -1721,13 +1791,17 @@
       setBusy(true, 'Submitting…');
       const SAFE = 'Registration service is temporarily unavailable. Please try again.';
       try {
-        const data = await postJSON(buildPayload());
+        const data = await postJSON(buildPayload(), delay => {
+          showErr('Temporary connection issue. Retrying...', '', false);
+          setBusy(true, 'Retrying...');
+        });
         if (data.ok === true && /^HF27-\d{4,}$/.test(String(data.registrationId))) { clearToken(); reset(); showDone(data); return; }
         const code = String(data.code || '');
         const safeMsg = typeof data.message === 'string' ? data.message.slice(0, 200) : '';
         let msg = SAFE;
         if (code === 'VALIDATION' && safeMsg) msg = safeMsg;
         else if (code === 'INSTITUTE_RESTRICTED') msg = safeMsg || 'This event is for participants outside KLS VDIT. Please enter a different institution.';
+        else if (code === 'RETRY') msg = 'The system is busy. Please try again.';
         else if (code === 'DUPLICATE_TEAM') msg = 'This email or phone number is already registered. If you think this is a mistake, please contact the organizing team.';
         else if (code === 'RATE_LIMITED') msg = 'Too many attempts. Please wait a few minutes and try again.';
         else if (code === 'CLOSED') msg = 'Registrations are currently closed.';

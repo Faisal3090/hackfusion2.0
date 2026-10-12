@@ -59,7 +59,7 @@ const REGISTRATION_STATUSES = ["RECEIVED", "CONFIRMED", "WAITLISTED", "CANCELLED
 
 // Opening the URL in a browser shows nothing sensitive.
 function doGet() {
-  return reply_({ ok: true, service: "HackFusion 2.0 registration", open: REGISTRATION_OPEN });
+  return reply_({ ok: true, service: "HackFusion 2.0 registration", open: REGISTRATION_OPEN, time: new Date().toISOString() });
 }
 
 function doPost(e) {
@@ -82,7 +82,13 @@ function doPost(e) {
 
     // One registration at a time: makes duplicate checks and ID generation race-free.
     lock = LockService.getScriptLock();
-    lock.waitLock(25000);
+    try {
+      lock.waitLock(25000);
+    } catch (lockErr) {
+      lock = null;
+      console.error("doPost failed [LOCK_TIMEOUT]: registration lock was busy");
+      return reply_({ ok: false, code: "RETRY", message: "The system is busy. Please try again." });
+    }
 
     var sheet = getSheet_();
     var rows = readRows_(sheet);
@@ -156,7 +162,8 @@ function doPost(e) {
 
     return reply_(successFrom_(row, false));
   } catch (err) {
-    console.error("doPost failed: " + (err && err.message ? err.message : "unknown"));   // no personal data logged
+    var errorCode = classifyError_(err);
+    console.error("doPost failed [" + errorCode + "]: " + (err && err.message ? err.message : "unknown"));   // no personal data logged
     return reply_({ ok: false, code: "SERVER_ERROR", message: "Service unavailable." });
   } finally {
     if (lock) { try { lock.releaseLock(); } catch (e2) {} }
@@ -330,6 +337,13 @@ function readRows_(sheet) {
 }
 
 function reply_(obj) { return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
+function classifyError_(err) {
+  var message = String(err && err.message ? err.message : err || "").toLowerCase();
+  if (/quota|limit exceeded|too many|service invoked too many/.test(message)) return "QUOTA_ERROR";
+  if (/sheet|spreadsheet|range|header|permission|access denied|not found/.test(message)) return "SHEET_ERROR";
+  if (/deployment|authorization|script function|doPost/.test(message)) return "BAD_DEPLOYMENT";
+  return "UNKNOWN_ERROR";
+}
 function str_(v) { return (typeof v === "string") ? v.trim() : (typeof v === "number" ? String(v) : ""); }
 function clean_(v) { return str_(v).replace(/\s+/g, " "); }
 function lower_(v) { return String(v == null ? "" : v).trim().toLowerCase(); }
