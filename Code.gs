@@ -19,6 +19,7 @@ const REGISTRATION_OPEN = true;          // set false to stop accepting registra
 const REGISTRATION_FEE = 300;            // rupees per person. THE SERVER decides the amount, not the browser.
 const ID_PREFIX = "HF27-";               // Registration IDs: HF27-0001, HF27-0002, ...
 const TIMEZONE = "Asia/Kolkata";
+const MIN_ADDITIONAL_MEMBERS = 2;        // team size min = 3 including the leader
 const MAX_ADDITIONAL_MEMBERS = 4;        // team size max = 5 including the leader
 
 // Must match the titles in the DOMAINS array in index.html.
@@ -26,7 +27,7 @@ const DOMAINS = ["Cybersecurity", "AI/ML", "Computer Vision"];
 
 // ---- Confirmation email settings ----
 const EVENT_NAME = "HackFusion 2.0";
-const EVENT_WHEN_WHERE = "This October at VDIT";           // shown in the email
+const EVENT_WHEN_WHERE = "Mark the date, see you on 30th October at VDIT"; // shown in the email
 const ORGANIZER_EMAIL = "PASTE_ORGANIZER_REPLY_TO_EMAIL";   // replies from team leads go here (leave as is to skip)
 const WHATSAPP_LINK = "PASTE_WHATSAPP_LINK_HERE";           // https:// invite link; button hidden if not set
 const SEND_CONFIRMATION_EMAIL = true;                        // set false to turn emails off
@@ -187,7 +188,7 @@ function validate_(p) {
   if (!leaderPhone) return bad("Please enter a valid team leader phone number.");
 
   var additional = int_(p.additionalMembers);
-  if (isNaN(additional) || additional < 0 || additional > MAX_ADDITIONAL_MEMBERS) return bad("Additional members must be between 0 and " + MAX_ADDITIONAL_MEMBERS + ".");
+  if (isNaN(additional) || additional < MIN_ADDITIONAL_MEMBERS || additional > MAX_ADDITIONAL_MEMBERS) return bad("Additional members must be between " + MIN_ADDITIONAL_MEMBERS + " and " + MAX_ADDITIONAL_MEMBERS + ".");
   if (!Array.isArray(p.members) || p.members.length !== additional) return bad("Team member details do not match the team size.");
 
   var emails = [leaderEmail], phones = [leaderPhone], members = [];
