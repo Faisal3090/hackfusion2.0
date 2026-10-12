@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/favicon.ico",
+      "destination": "/assets/hackfusion_logo.png"
+    },
+    {
       "source": "/",
       "destination": "/index.html"
     }

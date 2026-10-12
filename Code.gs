@@ -175,8 +175,13 @@ function validate_(p) {
 
   var institute = clean_(p.institute);
   if (institute.length < 3 || institute.length > 120 || !/\p{L}/u.test(institute) || /[<>]/.test(institute) || /^[=+\-@]/.test(institute)) return bad("Please enter a valid institute name.");
-  var instituteKey = institute.toLowerCase().replace(/[,.]/g, "").replace(/\s+/g, " ");
-  if (["kls vdit", "kls vishwanathrao deshpande institute of technology", "kls vdit haliyal", "kls vishwanathrao deshpande institute of technology haliyal"].indexOf(instituteKey) >= 0) return bad("Please participate in the internal hackathon for the students of the KLS VDIT.");
+  var instituteKey = institute.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "");
+  if (instituteKey.indexOf("vdit") >= 0 ||
+      instituteKey.indexOf("vishwanathraodeshpande") >= 0 ||
+      instituteKey.indexOf("vishwanraodeshpande") >= 0 ||
+      instituteKey.indexOf("vishwanathraoinstituteoftechnology") >= 0 ||
+      instituteKey.indexOf("vishwanraoinstituteoftechnology") >= 0 ||
+      instituteKey.indexOf("karnataklawsocietyvishwanathrao") >= 0) return bad("Please participate in the internal hackathon for the students of the KLS VDIT.");
 
   var leaderEmail = lower_(p.leaderEmail);
   if (leaderEmail.length > 254 || !RE_EMAIL.test(leaderEmail) || leaderEmail.indexOf("..") >= 0) return bad("Please enter a valid team leader email.");
@@ -213,11 +218,20 @@ function validate_(p) {
   var accommodation = str_(p.accommodation);
   if (accommodation !== "Yes" && accommodation !== "No") return bad("Please choose the accommodation option.");
 
-  var domain = str_(p.domain);
-  if (DOMAINS.indexOf(domain) < 0) return bad("Please choose a valid domain.");
+  var domainInput = str_(p.domain);
+  var domainKey = domainInput.toLowerCase().replace(/\s+/g, "");
+  var domainAliases = {
+    "cybersecurity": "Cybersecurity",
+    "ai/ml": "AI/ML",
+    "aiml": "AI/ML",
+    "computervision": "Computer Vision"
+  };
+  var domain = domainAliases[domainKey] || "";
+  if (!domain) return bad("Please choose a valid domain.");
 
-  var utr = str_(p.utr).replace(/\s+/g, "").toUpperCase();
-  if (!/^[A-Z0-9]{8,22}$/.test(utr)) return bad("Please enter a valid UTR number.");
+  var utr = str_(p.utr).replace(/\s+/g, "");
+  if (!/^\d{12}$/.test(utr)) return bad("Please enter a valid 12-digit UTR number.");
+  if (/^(\d)\1{11}$/.test(utr)) return bad("UTR cannot contain the same digit repeated 12 times.");
 
   var pd = str_(p.paymentDate), pt = str_(p.paymentTime);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(pd) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(pt)) return bad("Please enter a valid payment date and time.");
@@ -259,9 +273,14 @@ function computeFlags_(d, rows) {
   });
 
   if (utrIds.length) flags.push("POSSIBLE DUPLICATE UTR (" + utrIds.join(", ") + ")");
+  if (isSequentialUtr_(d.utr)) flags.push("SUSPICIOUS SEQUENTIAL UTR");
   if (memberIds.length) flags.push("POSSIBLE DUPLICATE MEMBER (" + memberIds.join(", ") + ")");
   if (teamIds.length) flags.push("POSSIBLE DUPLICATE TEAM (" + teamIds.join(", ") + ")");
   return flags;
+}
+
+function isSequentialUtr_(s) {
+  return "012345678901234567890123".indexOf(s) >= 0 || "987654321098765432109876".indexOf(s) >= 0;
 }
 
 /* ================= HELPERS ================= */
