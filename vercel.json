@@ -1,12 +1,1 @@
-{
-  "rewrites": [
-    {
-      "source": "/favicon.ico",
-      "destination": "/assets/Logo%20(2).png"
-    },
-    {
-      "source": "/",
-      "destination": "/index.html"
-    }
-  ]
-}
+{}
