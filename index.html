@@ -7,7 +7,7 @@
   <title>HackFusion 2.0</title>
 <link rel="icon" type="image/png" href="assets/Logo%20(2).png">
   <meta http-equiv="Content-Security-Policy"
-    content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; style-src-elem 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src data: https://fonts.gstatic.com; img-src 'self' https: data:; media-src data:; connect-src https://script.google.com https://script.googleusercontent.com https://cdn.jsdelivr.net; base-uri 'none'; form-action 'none'">
+    content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; style-src-elem 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src data: https://fonts.gstatic.com; img-src 'self' https: data:; media-src 'self' data:; connect-src https://script.google.com https://script.googleusercontent.com https://cdn.jsdelivr.net; base-uri 'none'; form-action 'none'">
   <script>
     /*
     ====================================================
@@ -27,7 +27,7 @@
     const CONFIG = {
       // Web App URL you get after "Deploy > New deployment" in Apps Script.
       // Looks like: https://script.google.com/macros/s/AKfy.../exec
-      GOOGLE_APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbwzKSruy8yu2fHokHLmB8Gb_2ghXfhy5FM_NunAFjSD4Kr2p2CSu58Go-D16WzV_vrroQ/exec",
+      GOOGLE_APPS_SCRIPT_URL: "https://script.google.com/macros/s/AKfycbyex4YUi-GWv3sWx57H1GePIEcRzo1dZT6I_17Ou1ANOWShFhHjLBGuhSS3TZirhUUqrg/exec",
 
       // Official UPI QR code image. Use an https:// image URL, or a file next
       // to this HTML such as "upi-qr.png". Shown on the payment step.
@@ -1115,8 +1115,71 @@
     }
 
     @media (max-width: 600px) {
+      html,
+      body {
+        overflow-x: hidden;
+      }
+
+      body {
+        font-size: 16px;
+      }
+
       .wrap {
+        width: 100%;
         padding: 20px 14px 46px;
+      }
+
+      .nav {
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .nav > * {
+        min-width: 0;
+      }
+
+      .nav .brand {
+        max-width: 62%;
+        overflow-wrap: anywhere;
+        text-align: right;
+      }
+
+      h1.brand,
+      .event-host,
+      .lead,
+      .when,
+      .tag {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+      }
+
+      h1.brand {
+        font-size: clamp(42px, 16vw, 72px);
+      }
+
+      .event-host {
+        font-size: clamp(19px, 5.8vw, 28px);
+        letter-spacing: .04em;
+      }
+
+      .hero {
+        min-height: calc(100svh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+        padding: 18px 0;
+        gap: 14px;
+      }
+
+      .lead {
+        font-size: clamp(23px, 7vw, 34px);
+      }
+
+      .when {
+        font-size: clamp(23px, 7vw, 34px);
+        line-height: 1.15;
+      }
+
+      .tag {
+        font-size: clamp(25px, 8vw, 32px);
       }
 
       .panel {
@@ -1162,9 +1225,18 @@
         flex-wrap: wrap;
       }
 
+      .row > * {
+        min-width: 0;
+      }
+
       .row button,
       .row .btn {
+        flex: 1 1 145px;
         min-height: 48px;
+        max-width: 100%;
+        padding-left: 16px;
+        padding-right: 16px;
+        white-space: normal;
       }
 
       .doms {
@@ -1173,6 +1245,52 @@
 
       .dom {
         padding: 16px;
+      }
+
+      .dom b {
+        font-size: clamp(22px, 7vw, 26px);
+        overflow-wrap: anywhere;
+      }
+
+      .pay {
+        width: 100%;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .qr.big {
+        width: min(200px, 100%);
+        height: auto;
+        aspect-ratio: 1;
+      }
+
+      .amt {
+        max-width: 100%;
+        font-size: clamp(26px, 8vw, 36px);
+        overflow-wrap: anywhere;
+        text-align: center;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .stat,
+      .small,
+      .stat b {
+        overflow-wrap: anywhere;
+      }
+
+      .stat b {
+        font-size: clamp(22px, 7vw, 28px);
+      }
+
+      .tbl {
+        max-width: 100%;
+      }
+
+      .tbl table {
+        min-width: 560px;
       }
 
       .domain-points {
@@ -1580,15 +1698,20 @@
     function playMissionCompleteSound() {
       try {
         if (!missionCompleteAudio) {
-          missionCompleteAudio = new Audio('assets/gta-san-andreas-mission-complete-sound-hq_4ZVTov6.mp3.mpeg');
+          missionCompleteAudio = document.createElement('audio');
+          missionCompleteAudio.src = 'assets/gta-san-andreas-mission-complete-sound-hq_4ZVTov6.mp3';
+          missionCompleteAudio.type = 'audio/mpeg';
           missionCompleteAudio.preload = 'auto';
+          missionCompleteAudio.setAttribute('playsinline', '');
           missionCompleteAudio.volume = 0.85;
+          missionCompleteAudio.setAttribute('aria-hidden', 'true');
+          document.body.appendChild(missionCompleteAudio);
         }
         missionCompleteAudio.currentTime = 0;
         const playback = missionCompleteAudio.play();
-        if (playback && typeof playback.catch === 'function') playback.catch(() => {});
+        if (playback && typeof playback.catch === 'function') playback.catch(err => console.warn('[HackFusion] confirmation audio could not play:', err && err.message ? err.message : 'unknown'));
       } catch (e) {
-        // Audio must never prevent registration submission.
+        console.warn('[HackFusion] confirmation audio could not load:', e && e.message ? e.message : 'unknown');
       }
     }
 
@@ -1604,6 +1727,7 @@
         const safeMsg = typeof data.message === 'string' ? data.message.slice(0, 200) : '';
         let msg = SAFE;
         if (code === 'VALIDATION' && safeMsg) msg = safeMsg;
+        else if (code === 'INSTITUTE_RESTRICTED') msg = safeMsg || 'This event is for participants outside KLS VDIT. Please enter a different institution.';
         else if (code === 'DUPLICATE_TEAM') msg = 'This email or phone number is already registered. If you think this is a mistake, please contact the organizing team.';
         else if (code === 'RATE_LIMITED') msg = 'Too many attempts. Please wait a few minutes and try again.';
         else if (code === 'CLOSED') msg = 'Registrations are currently closed.';
