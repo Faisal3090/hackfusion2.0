@@ -514,6 +514,39 @@
       color: var(--mut)
     }
 
+    .faq-list { display: grid; gap: 10px }
+
+    .faq-item {
+      border: 2px solid #6b3a85;
+      border-radius: 6px;
+      background: #0d0416;
+      overflow: hidden
+    }
+
+    .faq-item summary {
+      cursor: pointer;
+      padding: 14px 16px;
+      color: #fff;
+      font-size: 19px;
+      line-height: 1.35;
+      list-style-position: inside
+    }
+
+    .faq-item summary::marker { color: var(--cyan) }
+
+    .faq-item p {
+      margin: 0;
+      padding: 0 16px 16px;
+      color: var(--mut);
+      font-size: 18px;
+      line-height: 1.45
+    }
+
+    @media (max-width: 600px) {
+      .faq-item summary { padding: 14px; font-size: 17px }
+      .faq-item p { padding: 0 14px 14px; font-size: 16px }
+    }
+
     /* ---- additions for the new registration flow (existing rules above are untouched) ---- */
     .hp {
       position: absolute;
@@ -1625,7 +1658,7 @@
       },
 
       {
-        title: 'Accommodation', sub: 'Accommodation Required On The Previous Day?',
+        title: 'Accommodation', sub: 'Accommodation Required On The Previous Day? (Accommodation available on 29th October only; there is no accommodation on 30th or 31st October.)',
         html: () => `<div class="doms" role="radiogroup" aria-label="Accommodation required on the previous day">${['Yes', 'No'].map(v => `<div class="dom ${form.accom === v ? 'sel' : ''}" role="radio" tabindex="0" aria-checked="${form.accom === v}" data-a="${v}"><b>${v}</b></div>`).join('')}</div>`,
         after: () => pickable('data-a', 'accom'), collect: () => { },
         check: () => (form.accom === 'Yes' || form.accom === 'No') ? null : E('Choose Yes or No.', '')
@@ -1686,9 +1719,35 @@
    </a>
   </div>
  </div>
- <button id="reg">Register your team</button>
+ <div class="row" style="justify-content:center;flex-wrap:wrap;margin-top:0">
+  <button id="reg">Register your team</button>
+  <button id="faq" class="ghost">Frequently Asked Questions (FAQ)</button>
+ </div>
 </section>`;
       $('#reg').onclick = () => { reset(); location.hash = 'register'; };
+      $('#faq').onclick = () => { location.hash = 'faq'; };
+    }
+
+    function faq() {
+      app.innerHTML = `
+<div class="nav"><a href="#">â† Home</a><span class="brand" style="font-size:20px;text-shadow:2px 2px 0 var(--pink)">HackFusion 2.0</span></div>
+<div class="panel">
+ <h2 tabindex="-1">Accommodation and Event FAQs</h2>
+ <p class="sub">Everything you need to know before arriving at HackFusion 2.0.</p>
+ <div class="faq-list">
+  <details class="faq-item"><summary>Is accommodation available for outstation participants?</summary><p>Yes, accommodation is available for outstation participants.</p></details>
+  <details class="faq-item"><summary>Is accommodation provided free of cost, or is there an additional fee?</summary><p>Yes, accommodation and food are included in the registration fee. There are no additional charges for either.</p></details>
+  <details class="faq-item"><summary>Will accommodation be available on the night of 30 October?</summary><p>No, accommodation will not be provided on the night of 30 October. Participants will be required to stay in the designated hall, where they can work on their projects or rest.</p></details>
+  <details class="faq-item"><summary>Are separate accommodation arrangements available for boys and girls?</summary><p>Yes, separate accommodation arrangements are available for boys and girls.</p></details>
+  <details class="faq-item"><summary>Are food and refreshments included in the registration fee?</summary><p>Yes, food and accommodation are included in the registration fee itself. There are no additional charges.</p></details>
+  <details class="faq-item"><summary>Do we need to register for accommodation separately?</summary><p>No, a separate registration form is not required. You can select the accommodation option directly on the event website while registering.</p></details>
+  <details class="faq-item"><summary>What are the reporting and departure times?</summary><p>Participants arriving on 29 October who require accommodation are requested to report before 7:00 PM. Participants arriving on 30 October should report at around 10:00 AM.<br><br>Please note that these timings are tentative and may change. Any updates will be communicated through WhatsApp.</p></details>
+  <details class="faq-item"><summary>Is transportation available from the railway station or bus stand to the college?</summary><p>If your train or bus arrival timings align with our college bus schedule, our college buses can pick you up and bring you to the college. The college bus timings will be shared through WhatsApp.</p></details>
+  <details class="faq-item"><summary>Whom should I contact for help?</summary><p>You can contact Jiten Kalal at 8197140473 or Gagandeep P. H. at 9902024962 for assistance.</p></details>
+ </div>
+ <div class="row"><span></span><a class="btn" href="#register">Register your team</a></div>
+</div>`;
+      window.scrollTo(0, 0);
     }
 
     function render() {
@@ -1837,7 +1896,7 @@
     }
 
     /* ---------- routing + startup checks ---------- */
-    function route() { const h = location.hash.slice(1); window.scrollTo(0, 0); if (h === 'register') render(); else landing(); }
+    function route() { const h = location.hash.slice(1); window.scrollTo(0, 0); if (h === 'register') render(); else if (h === 'faq') faq(); else landing(); }
     addEventListener('hashchange', route);
     (function startupChecks() {
       const missing = ['GOOGLE_APPS_SCRIPT_URL', 'PAYMENT_QR_IMAGE', 'WHATSAPP_LINK'].filter(k => !isConfigured(CONFIG[k]));
